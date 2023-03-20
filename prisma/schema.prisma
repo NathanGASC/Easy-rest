@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+//USER IS USED BY EASY REST DON'T REMOVE BASIC SETUP
+model ER_User {
+  id      Int       @id @default(autoincrement())
+  login   String?
+  api_key String?
+  Role    ER_Role[]
+}
+
+//ROLE IS USED BY EASY REST DON'T REMOVE BASIC SETUP
+model ER_Role {
+  id             Int                 @id @default(autoincrement())
+  name           String
+  User           ER_User[]
+  PropertyAccess ER_PropertyAccess[]
+}
+
+//ROUTE IS USED BY EASY REST DON'T REMOVE BASIC SETUP
+model ER_Route {
+  id             Int                 @id @default(autoincrement())
+  path           String
+  method         String
+  PropertyAccess ER_PropertyAccess[]
+}
+
+//PROPERTYACCESS IS USED BY EASY REST DON'T REMOVE BASIC SETUP
+model ER_PropertyAccess {
+  id       Int      @id @default(autoincrement())
+  Route    ER_Route @relation(fields: [routeId], references: [id])
+  routeId  Int
+  Role     ER_Role  @relation(fields: [roleId], references: [id])
+  roleId   Int
+  property String?
+}
+
+model Ask {
+  id         Int       @id @default(autoincrement())
+  ask        String?
+  Response   Response? @relation(fields: [responseId], references: [id])
+  responseId Int?
+}
+
+model Response {
+  id       Int     @id @default(autoincrement())
+  response String?
+  Ask      Ask[]
+}
