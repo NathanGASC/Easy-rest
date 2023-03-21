@@ -7,12 +7,13 @@ import { generateSchema } from './validation'
 import dotenv from 'dotenv';
 import { generateRelation } from './relation';
 import Crypto from "crypto"
-const expressListRoutes = require('express-list-routes');
+import cors from "cors"
 
 dotenv.config();
 export const env: any = process.env
 
 const app = express()
+app.use(cors())
 
 const prisma = new PrismaClient()
 
