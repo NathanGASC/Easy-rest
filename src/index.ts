@@ -60,7 +60,7 @@ export class PrismApiREST<T>{
 
                 class GeneratedREST extends REST<any> {
                     constructor(prisma: T) {
-                        super(prisma as any, Model as keyof PrismaClient, validation!!, composer!!)
+                        super(prisma as any, Model as any, validation!!, composer!!)
                         this.entity = model as keyof PrismaClient
                     }
                 }
