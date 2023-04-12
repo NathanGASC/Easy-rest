@@ -1,88 +1,93 @@
 import { PrismaClient } from '@prisma/client'
-import express, { Router } from 'express'
+import express, { NextFunction, Request, Response, Router } from 'express'
 import * as joi from 'joi'
 import { REST } from './rest'
 import logger from 'node-color-log';
-import { generateSchema } from './validation'
-import dotenv from 'dotenv';
-import { generateRelation } from './relation';
-import Crypto from "crypto"
-import cors from "cors"
 
-dotenv.config();
-export const env: any = process.env
+export module PrismApiREST{
+    export type Config<T> = {
+        prisma: PrismaConf<T>,
+        api?: ApiConf<T> 
+    }
 
-const app = express()
-app.use(cors())
+    export type PrismaConf<T> = {
+        client: T
+    }
 
-const prisma = new PrismaClient()
+    export type ApiConf<T> = {
+        validation?: ValidationConf<T>
+        composer?: ComposerConf<T>
+        pagination?: PaginationConf
+    }
 
-app.use((req,res,next)=>{(req as any).id = Crypto.randomUUID(); next()});
-app.use(express.json())
+    export type ValidationConf<T> = {
+        [key:string]: joi.ObjectSchema
+    }
 
-interface EntityValidation {
-  [key:string]: joi.ObjectSchema
-}
+    export type ComposerConf<T> = {
+        [key:string]: any
+    }
 
-interface EntityRelation {
-    [key:string]: boolean
-  }
-
-interface Entities {
-  [key:string]: keyof PrismaClient
-}
-
-type ConfigEntities = {
-    [key:string]: {
-        get:boolean,
-        post:boolean,
-        update:boolean,
-        delete:boolean
+    export type PaginationConf = {
+        maxItem?: number
     }
 }
 
-export const generateRestRoutes = (router: Router, models: Entities) => {
-    Object.keys(models).forEach(model => {
-        const Model = models[model]
-        const validation = generateSchema(model)
-        const relations = generateRelation(model)
-        
-        class GeneratedREST extends REST<any> {
-            constructor(prisma: PrismaClient) {
-                super(prisma, Model,validation, relations)
-                this.entity = model as keyof PrismaClient
+export class PrismApiREST<T>{
+    rest = function(config:PrismApiREST.Config<T>){
+        return (req: Request,res: Response,next: NextFunction)=>{
+            const routes: any = {}
+            for (const key in config.prisma.client) {
+                if (key[0] != "_" && key[0] != "$") {
+                    routes[key] = key as keyof T;
+                }
             }
+
+            Object.keys(routes).forEach(model=>{
+                if(!req.path.includes(model)) return 
+                const Model = config.prisma.client[model as keyof T]
+                let validation = config.api?.validation? config.api?.validation[model] : undefined
+                let composer = config.api?.composer? config.api?.composer[model] : undefined
+        
+                if(validation === undefined) {
+                    validation = joi.object()
+                    logger.warn(`No validation for model "${model}". The POST and PUT request will not have validation for this model.`)
+                }
+
+                if(composer === undefined) {
+                    logger.warn(`No composer for model "${model}".`)
+                }
+
+                class GeneratedREST extends REST<any> {
+                    constructor(prisma: T) {
+                        super(prisma as any, Model as keyof PrismaClient, validation!!, composer!!)
+                        this.entity = model as keyof PrismaClient
+                    }
+                }
+
+                const generatedRoutes = new GeneratedREST(config.prisma.client)
+                switch (req.method) {
+                    case "GET":
+                        const id = req.url.match(/[0-9]*\/?$/)?.[0]
+                        if(id){
+                            generatedRoutes.findById(req,res)
+                        }else{
+                            generatedRoutes.findAll(req,res)
+                        }
+                        break;
+                    case "POST":
+                        generatedRoutes.create(req,res)
+                    break;
+                    case "PUT":
+                        generatedRoutes.update(req,res)
+                    break;
+                    case "DELETE":
+                        generatedRoutes.delete(req,res)
+                    break;
+                    default:
+                        break;
+                }
+            })
         }
-
-        logger.info(`create route for ${model} : /${model}`)
-        const generatedRoutes = new GeneratedREST(prisma)
-        router.get(`/${model}`, generatedRoutes.findAll.bind(generatedRoutes))
-        router.get(`/${model}/:id`, generatedRoutes.findById.bind(generatedRoutes))
-        router.post(`/${model}`, generatedRoutes.create.bind(generatedRoutes))
-        router.put(`/${model}/:id`, generatedRoutes.update.bind(generatedRoutes))
-        router.delete(`/${model}/:id`, generatedRoutes.delete.bind(generatedRoutes))
-    })
-}
-
-/**
- * Entities that will not be in the api which are only used localy
- * TODO: for some of them it can be interesting to have a default root user that can use them
- */
-//const internalEntities:string[] = ["role","route","propertyAccess"]
-const internalEntities:string[] = []
-
-const routes:Entities = {}
-for (const key in prisma) {
-    if(key[0] != "_" && key[0] != "$" && !internalEntities.includes(key)){
-        routes[key] = key as keyof PrismaClient;
     }
 }
-
-generateRestRoutes(
-    app,
-    routes,
-)
-
-app.listen(3000, async () => {
-    logger.info(`Server started on http://localhost:3000`)
-});

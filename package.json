@@ -1,15 +1,11 @@
 {
-  "name": "partiel",
+  "name": "prismapirest",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "setup an api REST by using prisma and express. This library is a wrapper of prisma and express to make it easier to create an api REST",
+  "main": "./dist/index.js",
   "scripts": {
     "start": "ts-node ./src/index.ts",
-    "prisma-migrate": "npx prisma migrate dev --name init",
-    "prisma-client": "npx prisma generate",
-    "prisma": "npm run prisma-migrate && npm run prisma-client",
-    "setup": "ts-node ./setup/defaultSetup.ts",
-    "docker": "npm run prisma && npm run setup && ts-node ./setup/populate && npm start"
+    "build": "webpack --config webpack.config.js"
   },
   "author": "",
   "license": "ISC",
