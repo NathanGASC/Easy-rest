@@ -14,7 +14,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -35,44 +35,45 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.REST = void 0;
-var node_color_log_1 = __importDefault(require("node-color-log"));
 var REST = /** @class */ (function () {
-    function REST(prisma, entity, validation, relations) {
+    function REST(prisma, entity, validation, relations, logger) {
         this.prisma = prisma;
         this.entity = entity;
         this.validation = validation;
         this.relations = relations;
+        this.logger = logger;
     }
     REST.prototype.findAll = function (req, res) {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
-            var entities, error_1;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            var page, entities, error_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        node_color_log_1.default.debug("".concat(req.id, " : findAll ").concat(this.entity));
-                        _a.label = 1;
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("findAll ".concat(this.entity));
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 6, , 7]);
+                        _b.trys.push([1, 6, , 7]);
+                        page = undefined;
+                        if (req.query.p)
+                            page = parseInt(req.query.p);
                         entities = void 0;
                         if (!this.relations) return [3 /*break*/, 3];
-                        return [4 /*yield*/, this.prisma[this.entity].findMany({ include: this.relations })];
+                        return [4 /*yield*/, this.prisma[this.entity].findMany({ include: this.relations, skip: page ? page * this.config.api.pagination.maxItem : undefined, take: this.config.api.pagination.maxItem })];
                     case 2:
-                        entities = _a.sent();
+                        entities = _b.sent();
                         return [3 /*break*/, 5];
-                    case 3: return [4 /*yield*/, this.prisma[this.entity].findMany()];
+                    case 3: return [4 /*yield*/, this.prisma[this.entity].findMany({ skip: page ? page * this.config.api.pagination.maxItem : undefined, take: this.config.api.pagination.maxItem })];
                     case 4:
-                        entities = _a.sent();
-                        _a.label = 5;
+                        entities = _b.sent();
+                        _b.label = 5;
                     case 5:
                         res.json(entities);
                         return [3 /*break*/, 7];
                     case 6:
-                        error_1 = _a.sent();
+                        error_1 = _b.sent();
                         this.onSQLFail(error_1, req, res);
                         return [3 /*break*/, 7];
                     case 7: return [2 /*return*/];
@@ -86,11 +87,11 @@ var REST = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        node_color_log_1.default.debug("".concat(req.id, " : findById ").concat(this.entity));
+                        this.logger.debug("findById ".concat(this.entity));
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
-                        id = req.params.id;
+                        id = req.query.id;
                         if (!id)
                             return [2 /*return*/, res.json({ error: "no id given" })];
                         return [4 /*yield*/, this.prisma[this.entity].findUnique({ where: { id: parseInt(id) }, include: this.relations })];
@@ -108,15 +109,16 @@ var REST = /** @class */ (function () {
         });
     };
     REST.prototype.create = function (req, res) {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
             var error, data, entity, error_3;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        node_color_log_1.default.debug("".concat(req.id, " : create ").concat(this.entity));
-                        _a.label = 1;
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("create ".concat(this.entity));
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 3, , 4]);
+                        _b.trys.push([1, 3, , 4]);
                         error = this.validation.validate(req.body).error;
                         if (error) {
                             res.json({ error: error.message });
@@ -125,11 +127,11 @@ var REST = /** @class */ (function () {
                         data = req.body;
                         return [4 /*yield*/, this.prisma[this.entity].create({ data: data })];
                     case 2:
-                        entity = _a.sent();
+                        entity = _b.sent();
                         res.json(entity);
                         return [3 /*break*/, 4];
                     case 3:
-                        error_3 = _a.sent();
+                        error_3 = _b.sent();
                         this.onSQLFail(error_3, req, res);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
@@ -138,31 +140,32 @@ var REST = /** @class */ (function () {
         });
     };
     REST.prototype.update = function (req, res) {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
             var error, id, data, entity, error_4;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        node_color_log_1.default.debug("".concat(req.id, " : update ").concat(this.entity));
-                        _a.label = 1;
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("".concat(req.id, " : update ").concat(this.entity));
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 3, , 4]);
+                        _b.trys.push([1, 3, , 4]);
                         error = this.validation.validate(req.body).error;
                         if (error) {
                             res.json({ error: error.message });
                             return [2 /*return*/];
                         }
-                        id = req.params.id;
+                        id = req.query.id;
                         if (!id)
                             return [2 /*return*/, res.json({ error: "no id given" })];
                         data = req.body;
                         return [4 /*yield*/, this.prisma[this.entity].update({ where: { id: parseInt(id) }, data: data })];
                     case 2:
-                        entity = _a.sent();
+                        entity = _b.sent();
                         res.json(entity);
                         return [3 /*break*/, 4];
                     case 3:
-                        error_4 = _a.sent();
+                        error_4 = _b.sent();
                         this.onSQLFail(error_4, req, res);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
@@ -171,25 +174,26 @@ var REST = /** @class */ (function () {
         });
     };
     REST.prototype.delete = function (req, res) {
+        var _a;
         return __awaiter(this, void 0, void 0, function () {
             var id, error_5;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
+            return __generator(this, function (_b) {
+                switch (_b.label) {
                     case 0:
-                        node_color_log_1.default.debug("".concat(req.id, " : delete ").concat(this.entity));
-                        _a.label = 1;
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("".concat(req.id, " : delete ").concat(this.entity));
+                        _b.label = 1;
                     case 1:
-                        _a.trys.push([1, 3, , 4]);
-                        id = req.params.id;
+                        _b.trys.push([1, 3, , 4]);
+                        id = req.query.id;
                         if (!id)
                             return [2 /*return*/, res.json({ error: "no id given" })];
                         return [4 /*yield*/, this.prisma[this.entity].delete({ where: { id: parseInt(id) } })];
                     case 2:
-                        _a.sent();
+                        _b.sent();
                         res.json({ message: "".concat(this.entity, " deleted") });
                         return [3 /*break*/, 4];
                     case 3:
-                        error_5 = _a.sent();
+                        error_5 = _b.sent();
                         this.onSQLFail(error_5, req, res);
                         return [3 /*break*/, 4];
                     case 4: return [2 /*return*/];
@@ -198,9 +202,14 @@ var REST = /** @class */ (function () {
         });
     };
     REST.prototype.onSQLFail = function (error, req, res) {
-        throw error;
-        //TODO: probably not a good idea to show those back errors like that. Also, not sure that error is always 400
-        res.status(400).send(error);
+        //throw error
+        //TODO: probably not a good idea to show those back errors like that. Also, not sure that error is always 400.
+        //Dev mode
+        res.status(400).send(error.toString());
+        //Prod mode
+        // res.status(400).send({
+        //     error: error
+        // });
     };
     return REST;
 }());

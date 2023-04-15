@@ -14,31 +14,14 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismApiREST = void 0;
-var joi = __importStar(require("joi"));
+var client_1 = require("@prisma/client");
+var express_1 = __importDefault(require("express"));
+var joi_1 = __importDefault(require("joi"));
 var rest_1 = require("./rest");
 var node_color_log_1 = __importDefault(require("node-color-log"));
 var PrismApiREST = /** @class */ (function () {
@@ -52,14 +35,14 @@ var PrismApiREST = /** @class */ (function () {
                     }
                 }
                 Object.keys(routes).forEach(function (model) {
-                    var _a, _b, _c, _d, _e;
+                    var _a, _b, _c, _d;
                     if (!req.path.includes(model))
                         return;
                     var Model = config.prisma.client[model];
                     var validation = ((_a = config.api) === null || _a === void 0 ? void 0 : _a.validation) ? (_b = config.api) === null || _b === void 0 ? void 0 : _b.validation[model] : undefined;
                     var composer = ((_c = config.api) === null || _c === void 0 ? void 0 : _c.composer) ? (_d = config.api) === null || _d === void 0 ? void 0 : _d.composer[model] : undefined;
                     if (validation === undefined) {
-                        validation = joi.object();
+                        validation = joi_1.default.object();
                         node_color_log_1.default.warn("No validation for model \"".concat(model, "\". The POST and PUT request will not have validation for this model."));
                     }
                     if (composer === undefined) {
@@ -68,8 +51,9 @@ var PrismApiREST = /** @class */ (function () {
                     var GeneratedREST = /** @class */ (function (_super) {
                         __extends(GeneratedREST, _super);
                         function GeneratedREST(prisma) {
-                            var _this = _super.call(this, prisma, Model, validation, composer) || this;
+                            var _this = _super.call(this, prisma, Model, validation, composer, config.api.logger) || this;
                             _this.entity = model;
+                            _this.config = config;
                             return _this;
                         }
                         return GeneratedREST;
@@ -77,7 +61,7 @@ var PrismApiREST = /** @class */ (function () {
                     var generatedRoutes = new GeneratedREST(config.prisma.client);
                     switch (req.method) {
                         case "GET":
-                            var id = (_e = req.url.match(/[0-9]*\/?$/)) === null || _e === void 0 ? void 0 : _e[0];
+                            var id = req.query.id;
                             if (id) {
                                 generatedRoutes.findById(req, res);
                             }
@@ -104,4 +88,85 @@ var PrismApiREST = /** @class */ (function () {
     return PrismApiREST;
 }());
 exports.PrismApiREST = PrismApiREST;
+var prisma = new client_1.PrismaClient();
+var app = (0, express_1.default)();
+app.use(express_1.default.json());
+app.use(new PrismApiREST().rest({
+    //We give the prisma client to the config
+    "prisma": {
+        "client": prisma
+    },
+    //We configure the api
+    "api": {
+        //By seting the composer we set dependencies between models. It's the "include" of prisma. You can find more about it at https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries.
+        "composer": {
+            //We set that the user model will have a posts field and should contain the Post model. If we don't put this, the user model will not have the posts field
+            "user": {
+                "posts": true
+            },
+            //We set that the post model will have a author field and should contain the User model. We also say that the author field should contain the posts field.
+            "post": {
+                "author": {
+                    "include": {
+                        "posts": true
+                    }
+                }
+            }
+        },
+        //We validate the data which are sent in the body of the request.
+        "validation": {
+            //For example here, an user should have a name & email. Try to do a post request on user without it and you will receive guidance to correct
+            "user": joi_1.default.object({
+                "name": joi_1.default.string().required(),
+                "email": joi_1.default.string().email().required()
+            })
+        },
+        //We set the pagination. Here we set that the max number of item per page is 10. If you ask for the first page with ?p=1 in your request, you will have 10 items max
+        "pagination": {
+            "maxItem": 10
+        },
+        //We set a logger. It's a way to enable/disable/customize logs. It's optional, if not defined, no logs will be displayed
+        "logger": {
+            log: function () {
+                var msg = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    msg[_i] = arguments[_i];
+                }
+                return console.log("LOG: ".concat(msg.join(" ")));
+            },
+            warn: function () {
+                var msg = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    msg[_i] = arguments[_i];
+                }
+                return console.log("WARN: ".concat(msg.join(" ")));
+            },
+            error: function () {
+                var msg = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    msg[_i] = arguments[_i];
+                }
+                return console.log("ERROR: ".concat(msg.join(" ")));
+            },
+            debug: function () {
+                var msg = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    msg[_i] = arguments[_i];
+                }
+                return console.log("DEBUG: ".concat(msg.join(" ")));
+            },
+            info: function () {
+                var msg = [];
+                for (var _i = 0; _i < arguments.length; _i++) {
+                    msg[_i] = arguments[_i];
+                }
+                return console.log("INFO: ".concat(msg.join(" ")));
+            }
+        }
+    }
+}));
+var port = 3000;
+app.listen(port, function () {
+    console.log("Server listen on port ".concat(3000));
+});
 //# sourceMappingURL=index.js.map
