@@ -38,12 +38,13 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.REST = void 0;
 var REST = /** @class */ (function () {
-    function REST(prisma, entity, validation, relations, logger) {
+    function REST(prisma, entity, validation, relations, logger, onSQLFail) {
         this.prisma = prisma;
         this.entity = entity;
         this.validation = validation;
         this.relations = relations;
         this.logger = logger;
+        this.onSQLFail = onSQLFail || this.onSQLFail;
     }
     REST.prototype.findAll = function (req, res) {
         var _a;
@@ -52,7 +53,7 @@ var REST = /** @class */ (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("findAll ".concat(this.entity));
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("findAll ".concat(this.entity.toString()));
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 6, , 7]);
@@ -87,7 +88,7 @@ var REST = /** @class */ (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        this.logger.debug("findById ".concat(this.entity));
+                        this.logger.debug("findById ".concat(this.entity.toString()));
                         _a.label = 1;
                     case 1:
                         _a.trys.push([1, 3, , 4]);
@@ -115,7 +116,7 @@ var REST = /** @class */ (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("create ".concat(this.entity));
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("create ".concat(this.entity.toString()));
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
@@ -146,7 +147,7 @@ var REST = /** @class */ (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("".concat(req.id, " : update ").concat(this.entity));
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("".concat(req.id, " : update ").concat(this.entity.toString()));
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
@@ -180,7 +181,7 @@ var REST = /** @class */ (function () {
             return __generator(this, function (_b) {
                 switch (_b.label) {
                     case 0:
-                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("".concat(req.id, " : delete ").concat(this.entity));
+                        (_a = this.logger) === null || _a === void 0 ? void 0 : _a.debug("".concat(req.id, " : delete ").concat(this.entity.toString()));
                         _b.label = 1;
                     case 1:
                         _b.trys.push([1, 3, , 4]);
@@ -190,7 +191,7 @@ var REST = /** @class */ (function () {
                         return [4 /*yield*/, this.prisma[this.entity].delete({ where: { id: parseInt(id) } })];
                     case 2:
                         _b.sent();
-                        res.json({ message: "".concat(this.entity, " deleted") });
+                        res.json({ message: "".concat(this.entity.toString(), " deleted") });
                         return [3 /*break*/, 4];
                     case 3:
                         error_5 = _b.sent();
@@ -202,14 +203,7 @@ var REST = /** @class */ (function () {
         });
     };
     REST.prototype.onSQLFail = function (error, req, res) {
-        //throw error
-        //TODO: probably not a good idea to show those back errors like that. Also, not sure that error is always 400.
-        //Dev mode
-        res.status(400).send(error.toString());
-        //Prod mode
-        // res.status(400).send({
-        //     error: error
-        // });
+        this.logger.error(error.toString());
     };
     return REST;
 }());

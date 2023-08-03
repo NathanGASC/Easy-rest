@@ -18,7 +18,8 @@ export module PrismApiREST{
         validation?: ValidationConf<T>
         composer?: ComposerConf<T>
         pagination?: PaginationConf
-        logger?: { log: any; warn: any; error: any; debug: any; info: any}
+        logger?: { log: any; warn: any; error: any; debug: any; info: any},
+        onSQLFail?: (error:any,req:Request,res:Response)=>void
     }
 
     export type ValidationConf<T> = {
@@ -44,7 +45,7 @@ export class PrismApiREST<T>{
                 }
             }
 
-            Object.keys(routes).forEach(model=>{
+            Object.keys(routes).forEach(async model=>{
                 if(!req.path.includes(model)) return 
                 const Model = config.prisma.client[model as keyof T]
                 let validation = config.api?.validation? config.api?.validation[model] : undefined
@@ -61,7 +62,7 @@ export class PrismApiREST<T>{
 
                 class GeneratedREST extends REST<any> {
                     constructor(prisma: T) {
-                        super(prisma as any, Model as any, validation!!, composer!!, config.api.logger)
+                        super(prisma as any, Model as any, validation!!, composer!!, config.api.logger, config.api.onSQLFail)
                         this.entity = model as keyof PrismaClient
                         this.config = config
                     }
@@ -72,78 +73,26 @@ export class PrismApiREST<T>{
                     case "GET":
                         const { id } = req.query
                         if(id){
-                            generatedRoutes.findById(req,res)
+                            await generatedRoutes.findById(req,res)
                         }else{
-                            generatedRoutes.findAll(req,res)
+                            await generatedRoutes.findAll(req,res)
                         }
                         break;
                     case "POST":
-                        generatedRoutes.create(req,res)
+                        await generatedRoutes.create(req,res)
                     break;
                     case "PUT":
-                        generatedRoutes.update(req,res)
+                        await generatedRoutes.update(req,res)
                     break;
                     case "DELETE":
-                        generatedRoutes.delete(req,res)
+                        await generatedRoutes.delete(req,res)
                     break;
                     default:
                         break;
                 }
+
+                next()
             })
         }
     }
 }
-
-const prisma = new PrismaClient()
-
-const app = express()
-app.use(express.json())
-app.use(new PrismApiREST().rest({
-    //We give the prisma client to the config
-    "prisma": {
-        "client": prisma
-    },
-    //We configure the api
-    "api":{
-        //By seting the composer we set dependencies between models. It's the "include" of prisma. You can find more about it at https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries.
-        "composer":{
-            //We set that the user model will have a posts field and should contain the Post model. If we don't put this, the user model will not have the posts field
-            "user":{
-                "posts": true
-            },
-            //We set that the post model will have a author field and should contain the User model. We also say that the author field should contain the posts field.
-            "post":{
-                "author": {
-                    "include": {
-                        "posts": true
-                    }
-                }
-            }
-        },
-        //We validate the data which are sent in the body of the request.
-        "validation":{
-            //For example here, an user should have a name & email. Try to do a post request on user without it and you will receive guidance to correct
-            "user": joi.object({
-                "name": joi.string().required(),
-                "email": joi.string().email().required()
-            })
-        },
-        //We set the pagination. Here we set that the max number of item per page is 10. If you ask for the first page with ?p=1 in your request, you will have 10 items max
-        "pagination":{
-            "maxItem": 10
-        },
-        //We set a logger. It's a way to enable/disable/customize logs. It's optional, if not defined, no logs will be displayed
-        "logger": {
-            log: (...msg:string[]) => console.log(`LOG: ${msg.join(" ")}`),
-            warn: (...msg:string[]) => console.log(`WARN: ${msg.join(" ")}`),
-            error: (...msg:string[]) => console.log(`ERROR: ${msg.join(" ")}`),
-            debug: (...msg:string[]) => console.log(`DEBUG: ${msg.join(" ")}`),
-            info: (...msg:string[]) => console.log(`INFO: ${msg.join(" ")}`)
-        }
-    }
-}))
-
-const port = 3000
-app.listen(port,()=>{
-    console.log(`Server listen on port ${3000}`)
-})

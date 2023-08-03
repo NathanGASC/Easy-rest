@@ -14,19 +14,54 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PrismApiREST = void 0;
-var client_1 = require("@prisma/client");
-var express_1 = __importDefault(require("express"));
 var joi_1 = __importDefault(require("joi"));
 var rest_1 = require("./rest");
 var node_color_log_1 = __importDefault(require("node-color-log"));
 var PrismApiREST = /** @class */ (function () {
     function PrismApiREST() {
         this.rest = function (config) {
+            var _this = this;
             return function (req, res, next) {
                 var routes = {};
                 for (var key in config.prisma.client) {
@@ -34,139 +69,78 @@ var PrismApiREST = /** @class */ (function () {
                         routes[key] = key;
                     }
                 }
-                Object.keys(routes).forEach(function (model) {
-                    var _a, _b, _c, _d;
-                    if (!req.path.includes(model))
-                        return;
-                    var Model = config.prisma.client[model];
-                    var validation = ((_a = config.api) === null || _a === void 0 ? void 0 : _a.validation) ? (_b = config.api) === null || _b === void 0 ? void 0 : _b.validation[model] : undefined;
-                    var composer = ((_c = config.api) === null || _c === void 0 ? void 0 : _c.composer) ? (_d = config.api) === null || _d === void 0 ? void 0 : _d.composer[model] : undefined;
-                    if (validation === undefined) {
-                        validation = joi_1.default.object();
-                        node_color_log_1.default.warn("No validation for model \"".concat(model, "\". The POST and PUT request will not have validation for this model."));
-                    }
-                    if (composer === undefined) {
-                        node_color_log_1.default.warn("No composer for model \"".concat(model, "\"."));
-                    }
-                    var GeneratedREST = /** @class */ (function (_super) {
-                        __extends(GeneratedREST, _super);
-                        function GeneratedREST(prisma) {
-                            var _this = _super.call(this, prisma, Model, validation, composer, config.api.logger) || this;
-                            _this.entity = model;
-                            _this.config = config;
-                            return _this;
+                Object.keys(routes).forEach(function (model) { return __awaiter(_this, void 0, void 0, function () {
+                    var Model, validation, composer, GeneratedREST, generatedRoutes, _a, id;
+                    var _b, _c, _d, _e;
+                    return __generator(this, function (_f) {
+                        switch (_f.label) {
+                            case 0:
+                                if (!req.path.includes(model))
+                                    return [2 /*return*/];
+                                Model = config.prisma.client[model];
+                                validation = ((_b = config.api) === null || _b === void 0 ? void 0 : _b.validation) ? (_c = config.api) === null || _c === void 0 ? void 0 : _c.validation[model] : undefined;
+                                composer = ((_d = config.api) === null || _d === void 0 ? void 0 : _d.composer) ? (_e = config.api) === null || _e === void 0 ? void 0 : _e.composer[model] : undefined;
+                                if (validation === undefined) {
+                                    validation = joi_1.default.object();
+                                    node_color_log_1.default.warn("No validation for model \"".concat(model, "\". The POST and PUT request will not have validation for this model."));
+                                }
+                                if (composer === undefined) {
+                                    node_color_log_1.default.warn("No composer for model \"".concat(model, "\"."));
+                                }
+                                GeneratedREST = /** @class */ (function (_super) {
+                                    __extends(GeneratedREST, _super);
+                                    function GeneratedREST(prisma) {
+                                        var _this = _super.call(this, prisma, Model, validation, composer, config.api.logger, config.api.onSQLFail) || this;
+                                        _this.entity = model;
+                                        _this.config = config;
+                                        return _this;
+                                    }
+                                    return GeneratedREST;
+                                }(rest_1.REST));
+                                generatedRoutes = new GeneratedREST(config.prisma.client);
+                                _a = req.method;
+                                switch (_a) {
+                                    case "GET": return [3 /*break*/, 1];
+                                    case "POST": return [3 /*break*/, 6];
+                                    case "PUT": return [3 /*break*/, 8];
+                                    case "DELETE": return [3 /*break*/, 10];
+                                }
+                                return [3 /*break*/, 12];
+                            case 1:
+                                id = req.query.id;
+                                if (!id) return [3 /*break*/, 3];
+                                return [4 /*yield*/, generatedRoutes.findById(req, res)];
+                            case 2:
+                                _f.sent();
+                                return [3 /*break*/, 5];
+                            case 3: return [4 /*yield*/, generatedRoutes.findAll(req, res)];
+                            case 4:
+                                _f.sent();
+                                _f.label = 5;
+                            case 5: return [3 /*break*/, 13];
+                            case 6: return [4 /*yield*/, generatedRoutes.create(req, res)];
+                            case 7:
+                                _f.sent();
+                                return [3 /*break*/, 13];
+                            case 8: return [4 /*yield*/, generatedRoutes.update(req, res)];
+                            case 9:
+                                _f.sent();
+                                return [3 /*break*/, 13];
+                            case 10: return [4 /*yield*/, generatedRoutes.delete(req, res)];
+                            case 11:
+                                _f.sent();
+                                return [3 /*break*/, 13];
+                            case 12: return [3 /*break*/, 13];
+                            case 13:
+                                next();
+                                return [2 /*return*/];
                         }
-                        return GeneratedREST;
-                    }(rest_1.REST));
-                    var generatedRoutes = new GeneratedREST(config.prisma.client);
-                    switch (req.method) {
-                        case "GET":
-                            var id = req.query.id;
-                            if (id) {
-                                generatedRoutes.findById(req, res);
-                            }
-                            else {
-                                generatedRoutes.findAll(req, res);
-                            }
-                            break;
-                        case "POST":
-                            generatedRoutes.create(req, res);
-                            break;
-                        case "PUT":
-                            generatedRoutes.update(req, res);
-                            break;
-                        case "DELETE":
-                            generatedRoutes.delete(req, res);
-                            break;
-                        default:
-                            break;
-                    }
-                });
+                    });
+                }); });
             };
         };
     }
     return PrismApiREST;
 }());
 exports.PrismApiREST = PrismApiREST;
-var prisma = new client_1.PrismaClient();
-var app = (0, express_1.default)();
-app.use(express_1.default.json());
-app.use(new PrismApiREST().rest({
-    //We give the prisma client to the config
-    "prisma": {
-        "client": prisma
-    },
-    //We configure the api
-    "api": {
-        //By seting the composer we set dependencies between models. It's the "include" of prisma. You can find more about it at https://www.prisma.io/docs/concepts/components/prisma-client/relation-queries.
-        "composer": {
-            //We set that the user model will have a posts field and should contain the Post model. If we don't put this, the user model will not have the posts field
-            "user": {
-                "posts": true
-            },
-            //We set that the post model will have a author field and should contain the User model. We also say that the author field should contain the posts field.
-            "post": {
-                "author": {
-                    "include": {
-                        "posts": true
-                    }
-                }
-            }
-        },
-        //We validate the data which are sent in the body of the request.
-        "validation": {
-            //For example here, an user should have a name & email. Try to do a post request on user without it and you will receive guidance to correct
-            "user": joi_1.default.object({
-                "name": joi_1.default.string().required(),
-                "email": joi_1.default.string().email().required()
-            })
-        },
-        //We set the pagination. Here we set that the max number of item per page is 10. If you ask for the first page with ?p=1 in your request, you will have 10 items max
-        "pagination": {
-            "maxItem": 10
-        },
-        //We set a logger. It's a way to enable/disable/customize logs. It's optional, if not defined, no logs will be displayed
-        "logger": {
-            log: function () {
-                var msg = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    msg[_i] = arguments[_i];
-                }
-                return console.log("LOG: ".concat(msg.join(" ")));
-            },
-            warn: function () {
-                var msg = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    msg[_i] = arguments[_i];
-                }
-                return console.log("WARN: ".concat(msg.join(" ")));
-            },
-            error: function () {
-                var msg = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    msg[_i] = arguments[_i];
-                }
-                return console.log("ERROR: ".concat(msg.join(" ")));
-            },
-            debug: function () {
-                var msg = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    msg[_i] = arguments[_i];
-                }
-                return console.log("DEBUG: ".concat(msg.join(" ")));
-            },
-            info: function () {
-                var msg = [];
-                for (var _i = 0; _i < arguments.length; _i++) {
-                    msg[_i] = arguments[_i];
-                }
-                return console.log("INFO: ".concat(msg.join(" ")));
-            }
-        }
-    }
-}));
-var port = 3000;
-app.listen(port, function () {
-    console.log("Server listen on port ".concat(3000));
-});
 //# sourceMappingURL=index.js.map

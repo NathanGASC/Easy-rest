@@ -19,6 +19,7 @@ export declare module PrismApiREST {
             debug: any;
             info: any;
         };
+        onSQLFail?: (error: any, req: Request, res: Response) => void;
     };
     type ValidationConf<T> = {
         [key: string]: joi.ObjectSchema;

@@ -25,7 +25,7 @@ export declare class REST<T> {
         error: any;
         debug: any;
         info: any;
-    });
+    }, onSQLFail?: (error: any, req: Request, res: Response) => void);
     findAll(req: Request, res: Response): Promise<void>;
     findById(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     create(req: Request, res: Response): Promise<void>;

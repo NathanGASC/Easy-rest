@@ -1,7 +1,7 @@
-import { prisma, Prisma, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { Request, Response } from 'express'
-import joi, { array } from "joi"
-import _, { isArray } from "lodash"
+import joi from "joi"
+import _ from "lodash"
 import { PrismApiREST } from '.'
 
 type Key = string | number;
@@ -15,16 +15,17 @@ export class REST<T> {
     protected config:PrismApiREST.Config<T>
     logger: { log: any; warn: any; error: any; debug: any; info: any }
 
-    constructor(prisma: PrismaClient, entity: keyof PrismaClient, validation: joi.ObjectSchema, relations:({[key:string]:boolean})|null, logger?: {log:any, warn:any, error:any, debug:any, info:any}) {
+    constructor(prisma: PrismaClient, entity: keyof PrismaClient, validation: joi.ObjectSchema, relations:({[key:string]:boolean})|null, logger?: {log:any, warn:any, error:any, debug:any, info:any}, onSQLFail?:(error:any,req:Request,res:Response)=>void) {
         this.prisma = prisma
         this.entity = entity
         this.validation = validation
         this.relations = relations
         this.logger = logger
+        this.onSQLFail = onSQLFail || this.onSQLFail
     }
 
     async findAll(req: Request, res: Response) {
-        this.logger?.debug(`findAll ${this.entity}`)
+        this.logger?.debug(`findAll ${this.entity.toString()}`)
         
         try {
             let page:number|undefined = undefined
@@ -43,7 +44,7 @@ export class REST<T> {
     }
 
     async findById(req: Request, res: Response) {
-        this.logger.debug(`findById ${this.entity}`)
+        this.logger.debug(`findById ${this.entity.toString()}`)
 
         try{
             const { id } = req.query
@@ -56,7 +57,7 @@ export class REST<T> {
     }
 
     async create(req: Request, res: Response) {
-        this.logger?.debug(`create ${this.entity}`)
+        this.logger?.debug(`create ${this.entity.toString()}`)
         try{
             const {error} = this.validation.validate(req.body)
             if(error){
@@ -72,7 +73,7 @@ export class REST<T> {
     }
 
     async update(req: Request, res: Response) {
-        this.logger?.debug(`${(req as any).id} : update ${this.entity}`)
+        this.logger?.debug(`${(req as any).id} : update ${this.entity.toString()}`)
         
         try{
             const {error} = this.validation.validate(req.body)
@@ -91,28 +92,19 @@ export class REST<T> {
     }
 
     async delete(req: Request, res: Response) {
-        this.logger?.debug(`${(req as any).id} : delete ${this.entity}`)
+        this.logger?.debug(`${(req as any).id} : delete ${this.entity.toString()}`)
 
         try{            
             const { id } = req.query
             if(!id) return res.json({error: "no id given"})
             await (this.prisma[this.entity] as any).delete({ where: { id:parseInt(id as string) } })
-            res.json({ message: `${this.entity} deleted` })
+            res.json({ message: `${this.entity.toString()} deleted` })
         } catch (error) {
             this.onSQLFail(error,req,res)
         }
     }
 
     onSQLFail(error:any, req: Request, res: Response){
-        //throw error
-        //TODO: probably not a good idea to show those back errors like that. Also, not sure that error is always 400.
-
-        //Dev mode
-        res.status(400).send(error.toString());
-
-        //Prod mode
-        // res.status(400).send({
-        //     error: error
-        // });
+        this.logger.error(error.toString())
     }
 }
