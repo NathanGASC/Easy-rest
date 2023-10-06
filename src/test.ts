@@ -108,16 +108,26 @@ app.use(new PrismApiREST().rest({
                     isNotPrismaError = true
                     httpError = {
                         error_name: error.name || "UnknownError",
-                        error_stack: error.stack
+                        error_message: error.message
                     }
             }
 
+            const notImportantError = [
+                "ParsePageError"
+            ]
             if(!isNotPrismaError){
+                //Error that come from prisma. They generally come from bad user Request or database constraint. 
+                //We log them in gray as they are not important to us but can still be usefull to debug
                 console.error(color.gray("------------------ START   Prisma Error ------------------"))
                 console.error(color.gray(error))
                 console.error(color.gray("------------------ END     Prisma Error ------------------"))
+            }else if(notImportantError.includes(error.name)){
+                //Some error will come from prismapirest itself. They generally come from bad user Request, and we want
+                //to log them in gray as they are not important to us but can still be usefull to debug
+                console.error(color.gray(error))
             }else{
-                console.error(color.red(error))
+                //Other error are important because we don't know them, so they are unexpected errors.
+                console.error(color.red(error.stack))
             }
             
             res.status(error.status || 500).json(httpError)
