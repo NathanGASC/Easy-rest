@@ -83,7 +83,7 @@ export class REST<T> {
     }
 
     async update(req: Request, res: Response) {
-        this.logger?.debug(`${(req as any).id} : update ${this.entity.toString()}`)
+        this.logger?.debug(`${req.query.id} : update ${this.entity.toString()}`)
         
         try{
             const {error} = this.validation.validate(req.body)
@@ -103,7 +103,7 @@ export class REST<T> {
     }
 
     async delete(req: Request, res: Response) {
-        this.logger?.debug(`${(req as any).id} : delete ${this.entity.toString()}`)
+        this.logger?.debug(`${req.query.id} : delete ${this.entity.toString()}`)
 
         try{            
             const { id } = req.query
