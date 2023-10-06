@@ -180,8 +180,7 @@ model Post {
   updatedAt DateTime @updatedAt
 }
 ```
-
-For this exemple we will use a SQLite database. So you must change your .env file like that :
+And for this exemple we will use a SQLite database. So you must change your .env file like that :
 ```
 # Environment variables declared in this file are automatically made available to Prisma.
 # See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
@@ -191,7 +190,6 @@ For this exemple we will use a SQLite database. So you must change your .env fil
 
 DATABASE_URL="file:./dev.db"
 ```
-
-Run `npx prisma migrate dev --name init` and `npx prisma generate`. You will have to run both of those commands each time you update your prisma file.
+Run `npx prisma migrate dev` and `npx prisma generate`. You will have to run both of those commands each time you update your prisma file or change your database.
 
 You could run your server now.
