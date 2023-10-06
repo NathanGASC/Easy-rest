@@ -1,12 +1,16 @@
 import { PrismaClient } from '@prisma/client'
 import { Request, Response } from 'express'
 import joi from "joi"
-import _ from "lodash"
+import _, { get } from "lodash"
 import { PrismApiREST } from '.'
+import { requestGetWhereQuery, requestGetPage } from './utils'
 
 type Key = string | number;
 type KeyPath = (string | number)[];
 
+/**
+ * A REST class to create a REST API from a prisma client
+ */
 export class REST<T> {
     protected prisma: PrismaClient
     protected entity: keyof PrismaClient
@@ -28,29 +32,34 @@ export class REST<T> {
         this.logger?.debug(`findAll ${this.entity.toString()}`)
         
         try {
-            let page:number|undefined = undefined
-            if(req.query.p) page = parseInt(req.query.p as string)
-
+            let page:number|undefined = requestGetPage(req)
+            let where:any = requestGetWhereQuery(req)
             let entities:any;
-            if(this.relations){
-                entities = await (this.prisma[this.entity] as any).findMany({include:this.relations, skip: page? page*this.config.api.pagination.maxItem : undefined, take: this.config.api.pagination.maxItem})
-            }else{
-                entities = await (this.prisma[this.entity] as any).findMany({skip: page? page*this.config.api.pagination.maxItem : undefined, take: this.config.api.pagination.maxItem})
+
+            var defaultRequest = {
             }
+
+            var relation = {
+                include: this.relations,
+            }
+
+            var pagesRequest = {
+                skip: page != null? page*this.config.api.pagination.maxItem : undefined, 
+                take: this.config.api.pagination.maxItem
+            }
+
+            var whereRequest = {
+                where: where
+            }
+
+            var finalRequest = defaultRequest
+            if(page != null) finalRequest = _.merge(finalRequest, pagesRequest)
+            if(where != null) finalRequest = _.merge(finalRequest, whereRequest)
+            if(this.relations != null) finalRequest = _.merge(finalRequest, relation)
+
+            this.logger.info(`findAll ${this.entity.toString()} with request ${JSON.stringify(finalRequest)}`)
+            entities = await (this.prisma[this.entity] as any).findMany(finalRequest)
             res.json(entities)
-        } catch (error) {
-            this.onSQLFail(error,req,res)
-        }
-    }
-
-    async findById(req: Request, res: Response) {
-        this.logger.debug(`findById ${this.entity.toString()}`)
-
-        try{
-            const { id } = req.query
-            if(!id) return res.json({error: "no id given"})
-            const entity = await (this.prisma[this.entity] as any).findUnique({ where: {  id:parseInt(id as string) }, include: this.relations })
-            res.json(entity)
         } catch (error) {
             this.onSQLFail(error,req,res)
         }
@@ -65,6 +74,7 @@ export class REST<T> {
                 return 
             }  
             const data = req.body as T
+            this.logger.info(`create ${this.entity.toString()} with data ${JSON.stringify(data)}`)
             const entity = await (this.prisma[this.entity] as any).create({ data:data })
             res.json(entity)
         } catch (error) {
@@ -84,6 +94,7 @@ export class REST<T> {
             const { id } = req.query
             if(!id) return res.json({error: "no id given"})
             const data = req.body as T
+            this.logger.info(`update ${this.entity.toString()} with data ${JSON.stringify(data)}`)
             const entity = await (this.prisma[this.entity] as any).update({ where: { id:parseInt(id as string) }, data })
             res.json(entity)
         } catch (error) {
@@ -98,6 +109,7 @@ export class REST<T> {
             const { id } = req.query
             if(!id) return res.json({error: "no id given"})
             await (this.prisma[this.entity] as any).delete({ where: { id:parseInt(id as string) } })
+            this.logger.info(`delete ${this.entity.toString()} with id ${id}`)
             res.json({ message: `${this.entity.toString()} deleted` })
         } catch (error) {
             this.onSQLFail(error,req,res)

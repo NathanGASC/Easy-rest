@@ -35,6 +35,18 @@ export module PrismApiREST{
     }
 }
 
+/**
+ * A REST class to create a REST API from a prisma client. Will create foreach model a route with the following path:
+ * - GET /model: get all the model
+ * - GET /model/:id: get the model with the id
+ * - POST /model: create a new model
+ * - PUT /model/:id: update the model with the id
+ * - DELETE /model/:id: delete the model with the id
+ * 
+ * You can tune your request by adding query parameters:
+ * - GET /model?p=0: get the first page of the model
+ * - GET /model?key=value: get the model where the given key is equal to the given value
+ */
 export class PrismApiREST<T>{
     rest = function(config:PrismApiREST.Config<T>){
         return (req: Request,res: Response,next: NextFunction)=>{
@@ -46,7 +58,7 @@ export class PrismApiREST<T>{
             }
 
             Object.keys(routes).forEach(async model=>{
-                if(!req.path.includes(model)) return 
+                if(req.path != `/${model}`) return 
                 const Model = config.prisma.client[model as keyof T]
                 let validation = config.api?.validation? config.api?.validation[model] : undefined
                 let composer = config.api?.composer? config.api?.composer[model] : undefined
@@ -71,13 +83,8 @@ export class PrismApiREST<T>{
                 const generatedRoutes = new GeneratedREST(config.prisma.client)
                 switch (req.method) {
                     case "GET":
-                        const { id } = req.query
-                        if(id){
-                            await generatedRoutes.findById(req,res)
-                        }else{
-                            await generatedRoutes.findAll(req,res)
-                        }
-                        break;
+                        await generatedRoutes.findAll(req,res)
+                    break;
                     case "POST":
                         await generatedRoutes.create(req,res)
                     break;
@@ -90,7 +97,6 @@ export class PrismApiREST<T>{
                     default:
                         break;
                 }
-
                 next()
             })
         }

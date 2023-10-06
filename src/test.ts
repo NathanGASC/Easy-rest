@@ -4,8 +4,10 @@
 
 import express from "express"
 import { PrismApiREST } from "./index"
-import { PrismaClient } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import joi from "joi"
+import _ from "lodash"
+import { color } from "console-log-colors"
 
 const prisma = new PrismaClient()
 
@@ -54,10 +56,71 @@ app.use(new PrismApiREST().rest({
             info: (...msg:string[]) => console.log(`INFO: ${msg.join(" ")}`)
         },
         "onSQLFail": (error:any,req:express.Request,res:express.Response)=>{
-            //Here we customize the error message when a SQL error happen. It's a good idea to not display SQL error to the user in release for security reason.
-            res.json({
-                error: error.toString()
-            })
+            //log error class name by using prototype
+            var prismaDocUrl = "https://www.prisma.io/docs/reference/api-reference/error-reference"
+            var httpError:any = {}
+            var isNotPrismaError = false
+
+            switch (error.constructor) {
+                case Prisma.PrismaClientKnownRequestError:
+                    error.status = 400
+                    httpError = {
+                        error_name: "PrismaClientKnownRequestError",
+                        error_meta: error.meta,
+                        error_href: `${prismaDocUrl}/#${"PrismaClientKnownRequestError".toLowerCase()}`,
+                        error_code: error.code,
+                        error_code_href: `${prismaDocUrl}/#${error.code.toLowerCase()}`,
+                        client_version: error.clientVersion,
+                    }
+                break;
+                case Prisma.PrismaClientUnknownRequestError:
+                    httpError = {
+                        error_name: "PrismaClientUnknownRequestError",
+                        error_href: `${prismaDocUrl}/#${"PrismaClientUnknownRequestError".toLowerCase()}`,
+                        client_version: error.clientVersion,
+                    }
+                break;
+                case Prisma.PrismaClientValidationError:
+                    httpError = {
+                        error_name: "PrismaClientValidationError",
+                        error_href: `${prismaDocUrl}/#${"PrismaClientValidationError".toLowerCase()}`,
+                        client_version: error.clientVersion,
+                    }
+                break;
+                case Prisma.PrismaClientInitializationError:
+                    error.status = 400
+                    httpError = {
+                        error_name: "PrismaClientInitializationError",
+                        error_href: `${prismaDocUrl}/#${"PrismaClientInitializationError".toLowerCase()}`,
+                        error_code: error.code,
+                        error_code_href: `${prismaDocUrl}/#${error.code.toLowerCase()}`,
+                        client_version: error.clientVersion,
+                    }
+                break;
+                case Prisma.PrismaClientRustPanicError:
+                    httpError = {
+                        error_name: "PrismaClientValidationError",
+                        error_href: `${prismaDocUrl}/#${"PrismaClientValidationError".toLowerCase()}`,
+                        client_version: error.clientVersion,
+                    }
+                break;
+                default:
+                    isNotPrismaError = true
+                    httpError = {
+                        error_name: error.name || "UnknownError",
+                        error_stack: error.stack
+                    }
+            }
+
+            if(!isNotPrismaError){
+                console.error(color.gray("------------------ START   Prisma Error ------------------"))
+                console.error(color.gray(error))
+                console.error(color.gray("------------------ END     Prisma Error ------------------"))
+            }else{
+                console.error(color.red(error))
+            }
+            
+            res.status(error.status || 500).json(httpError)
         }
     }
 }))
