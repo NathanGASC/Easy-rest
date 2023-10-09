@@ -3,7 +3,7 @@ import { Request, Response } from 'express'
 import joi from "joi"
 import _, { get } from "lodash"
 import { PrismApiREST } from '.'
-import { requestGetWhereQuery, requestGetPage } from './utils'
+import { requestGetWhereQuery, requestGetPage, ValidationError } from './utils'
 
 type Key = string | number;
 type KeyPath = (string | number)[];
@@ -70,8 +70,7 @@ export class REST<T> {
         try{
             const {error} = this.validation.validate(req.body)
             if(error){
-                res.json({error: error.message})
-                return 
+                throw new ValidationError(error.message)
             }  
             const data = req.body as T
             this.logger.info(`create ${this.entity.toString()} with data ${JSON.stringify(data)}`)
@@ -88,8 +87,7 @@ export class REST<T> {
         try{
             const {error} = this.validation.validate(req.body)
             if(error){
-                res.json({error: error.message})
-                return 
+                throw new ValidationError(error.message)
             }
             const { id } = req.query
             if(!id) return res.json({error: "no id given"})

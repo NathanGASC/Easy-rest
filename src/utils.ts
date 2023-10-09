@@ -74,3 +74,11 @@ export class ParsePageError extends Error{
         this.name = "ParsePageError"
     }
 }
+
+export class ValidationError extends Error{
+    status = 400
+    constructor(message:string){
+        super(message)
+        this.name = "ValidationError"
+    }
+}
