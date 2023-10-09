@@ -122,7 +122,8 @@ app.use(new PrismApiREST().rest({
             }
 
             const notImportantError = [
-                "ParsePageError"
+                "ParsePageError",
+                "ValidationError"
             ]
             if(!isNotPrismaError){
                 //Error that come from prisma. They generally come from bad user Request or database constraint. 
