@@ -1,6 +1,6 @@
 {
   "name": "prismapirest",
-  "version": "1.0.11",
+  "version": "1.0.13",
   "description": "setup an api REST by using prisma and express. This library is a wrapper of prisma and express to make it easier to create an api REST",
   "main": "./dist/index.js",
   "scripts": {
@@ -8,7 +8,14 @@
     "build": "tsc",
     "test": "ts-node ./src/test.ts"
   },
-  "author": "",
+  "keywords": [
+    "prisma",
+    "express",
+    "api",
+    "rest",
+    "typescript"
+  ],
+  "author": "Nathan Gasc",
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^4.8.1",
