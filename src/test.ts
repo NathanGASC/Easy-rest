@@ -8,6 +8,7 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import joi from "joi"
 import _ from "lodash"
 import { color } from "console-log-colors"
+import { ParsePageError, ValidationError } from "./utils"
 
 const prisma = new PrismaClient()
 
@@ -59,7 +60,8 @@ app.use(new PrismApiREST().rest({
             //log error class name by using prototype
             var prismaDocUrl = "https://www.prisma.io/docs/reference/api-reference/error-reference"
             var httpError:any = {}
-            var isNotPrismaError = false
+            var isPrismaError = true
+            var isImportantError = false
 
             switch (error.constructor) {
                 case Prisma.PrismaClientKnownRequestError:
@@ -104,25 +106,30 @@ app.use(new PrismApiREST().rest({
                         client_version: error.clientVersion,
                     }
                 break;
+                case ParsePageError:
+                case ValidationError:
+                    httpError = {
+                        error_name: error.name,
+                        error_message: error.message
+                    }
+                    isPrismaError = false
+                    break;
                 default:
-                    isNotPrismaError = true
+                    isImportantError = true
+                    isPrismaError = false
                     httpError = {
                         error_name: error.name || "UnknownError",
                         error_message: error.message
                     }
             }
 
-            const notImportantError = [
-                "ParsePageError",
-                "ValidationError"
-            ]
-            if(!isNotPrismaError){
+            if(isPrismaError){
                 //Error that come from prisma. They generally come from bad user Request or database constraint. 
                 //We log them in gray as they are not important to us but can still be usefull to debug
                 console.error(color.gray("------------------ START   Prisma Error ------------------"))
                 console.error(color.gray(error))
                 console.error(color.gray("------------------ END     Prisma Error ------------------"))
-            }else if(notImportantError.includes(error.name)){
+            }else if(isImportantError){
                 //Some error will come from prismapirest itself. They generally come from bad user Request, and we want
                 //to log them in gray as they are not important to us but can still be usefull to debug
                 console.error(color.gray(error))
