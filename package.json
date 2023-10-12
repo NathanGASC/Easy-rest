@@ -1,6 +1,6 @@
 {
   "name": "prismapirest",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "setup an api REST by using prisma and express. This library is a wrapper of prisma and express to make it easier to create an api REST",
   "main": "./dist/index.js",
   "scripts": {
