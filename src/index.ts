@@ -4,34 +4,56 @@ import joi from 'joi';
 import { REST } from './rest'
 import logger from 'node-color-log';
 
-export module PrismApiREST{
-    export type Config<T> = {
-        prisma: PrismaConf<T>,
-        api?: ApiConf<T> 
-    }
+export type Config<T> = {
+    prisma: PrismaConf<T>,
+    api?: ApiConf<T> 
+}
 
-    export type PrismaConf<T> = {
-        client: T
-    }
+export type PrismaConf<T> = {
+    client: T
+}
 
-    export type ApiConf<T> = {
-        validation?: ValidationConf<T>
-        composer?: ComposerConf<T>
-        pagination?: PaginationConf
-        logger?: { log: any; warn: any; error: any; debug: any; info: any},
-        onSQLFail?: (error:any,req:Request,res:Response)=>void
-    }
+export type ApiConf<T> = {
+    validation?: ValidationConf<T>
+    composer?: ComposerConf<T>
+    pagination?: PaginationConf
+    logger?: { log: any; warn: any; error: any; debug: any; info: any},
+    onSQLFail?: (error:any,req:Request,res:Response)=>void
+}
 
-    export type ValidationConf<T> = {
-        [key:string]: joi.ObjectSchema
-    }
+export type ValidationConf<T> = {
+    [key:string]: joi.ObjectSchema
+}
 
-    export type ComposerConf<T> = {
-        [key:string]: any
-    }
+export type ComposerConf<T> = {
+    [key:string]: any
+}
 
-    export type PaginationConf = {
-        maxItem?: number
+export type PaginationConf = {
+    maxItem?: number
+}
+
+export class ParseIntError extends Error{
+    status = 400
+    constructor(message:string){
+        super(message)
+        this.name = "ParseIntError"
+    }
+}
+
+export class ParsePageError extends Error{
+    status = 400
+    constructor(message:string){
+        super(message)
+        this.name = "ParsePageError"
+    }
+}
+
+export class ValidationError extends Error{
+    status = 400
+    constructor(message:string){
+        super(message)
+        this.name = "ValidationError"
     }
 }
 
@@ -48,7 +70,7 @@ export module PrismApiREST{
  * - GET /model?key=value: get the model where the given key is equal to the given value
  */
 export class PrismApiREST<T>{
-    rest = function(config:PrismApiREST.Config<T>){
+    rest = function(config:Config<T>){
         return (req: Request,res: Response,next: NextFunction)=>{
             const routes: any = {}
             for (const key in config.prisma.client) {

@@ -3,12 +3,11 @@
  */
 
 import express from "express"
-import { PrismApiREST } from "./index"
+import { ParsePageError, PrismApiREST, ValidationError } from "./index"
 import { Prisma, PrismaClient } from '@prisma/client'
 import joi from "joi"
 import _ from "lodash"
 import { color } from "console-log-colors"
-import { ParsePageError, ValidationError } from "./utils"
 
 const prisma = new PrismaClient()
 

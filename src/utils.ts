@@ -1,5 +1,6 @@
 import { Request } from "express"
 import _ from "lodash"
+import { ParseIntError, ParsePageError } from "."
 
 /**
  * Get the where query from the request and remove custom query which is used by the api (like p for page) 
@@ -56,29 +57,5 @@ export function parseIntOrFail(int: string){
         return parsedInt
     }catch(e){
         throw new ParseIntError(`"${int}" is not a number and can't be parsed to int`) 
-    }
-}
-
-export class ParseIntError extends Error{
-    status = 400
-    constructor(message:string){
-        super(message)
-        this.name = "ParseIntError"
-    }
-}
-
-export class ParsePageError extends Error{
-    status = 400
-    constructor(message:string){
-        super(message)
-        this.name = "ParsePageError"
-    }
-}
-
-export class ValidationError extends Error{
-    status = 400
-    constructor(message:string){
-        super(message)
-        this.name = "ValidationError"
     }
 }

@@ -2,8 +2,8 @@ import { PrismaClient } from '@prisma/client'
 import { Request, Response } from 'express'
 import joi from "joi"
 import _, { get } from "lodash"
-import { PrismApiREST } from '.'
-import { requestGetWhereQuery, requestGetPage, ValidationError } from './utils'
+import { requestGetWhereQuery, requestGetPage } from './utils'
+import { Config, ValidationError } from '.'
 
 type Key = string | number;
 type KeyPath = (string | number)[];
@@ -16,7 +16,7 @@ export class REST<T> {
     protected entity: keyof PrismaClient
     protected validation: joi.ObjectSchema
     protected relations: {[key:string]:boolean}|null
-    protected config:PrismApiREST.Config<T>
+    protected config: Config<T>
     logger: { log: any; warn: any; error: any; debug: any; info: any }
 
     constructor(prisma: PrismaClient, entity: keyof PrismaClient, validation: joi.ObjectSchema, relations:({[key:string]:boolean})|null, logger?: {log:any, warn:any, error:any, debug:any, info:any}, onSQLFail?:(error:any,req:Request,res:Response)=>void) {
